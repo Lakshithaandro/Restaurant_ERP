@@ -1,0 +1,79 @@
+{
+  "info": {
+    "name": "Restaurant ERP MERN API",
+    "description": "Postman collection for the Restaurant ERP backend. Set baseUrl to http://localhost:5000/api and token after logging in.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000/api" },
+    { "key": "token", "value": "" },
+    { "key": "invoiceId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": { "method": "GET", "url": "{{baseUrl}}/health" }
+    },
+    {
+      "name": "Public - Available tables",
+      "request": { "method": "GET", "url": "{{baseUrl}}/public/tables" }
+    },
+    {
+      "name": "Public - Featured menu",
+      "request": { "method": "GET", "url": "{{baseUrl}}/public/menu" }
+    },
+    {
+      "name": "Public - Create reservation",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerName\": \"Guest User\",\n  \"phone\": \"9876543210\",\n  \"partySize\": 2,\n  \"date\": \"2026-06-20\",\n  \"time\": \"19:30\",\n  \"notes\": \"Window seat if available\"\n}"
+        },
+        "url": "{{baseUrl}}/public/reservations"
+      }
+    },
+    {
+      "name": "Auth - Staff login",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@restaurant.com\",\n  \"password\": \"admin123\"\n}" },
+        "url": "{{baseUrl}}/auth/login"
+      }
+    },
+    {
+      "name": "Dashboard",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{baseUrl}}/dashboard"
+      }
+    },
+    {
+      "name": "Billing - Billable orders",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{baseUrl}}/billing/billable"
+      }
+    },
+    {
+      "name": "Billing - Invoices",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{baseUrl}}/billing"
+      }
+    },
+    {
+      "name": "Billing - Download invoice HTML",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{baseUrl}}/billing/{{invoiceId}}/download"
+      }
+    }
+  ]
+}
