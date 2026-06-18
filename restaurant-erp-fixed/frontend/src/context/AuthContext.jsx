@@ -38,10 +38,17 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    const res = await api.post("/auth/login", { email, password });
-    localStorage.setItem("token", res.data.token);
-    setUser(res.data.user);
-    return res.data.user;
+    try {
+      console.debug("AuthContext: login attempt", { email });
+      const res = await api.post("/auth/login", { email, password });
+      console.debug("AuthContext: login response", { status: res.status, data: res.data });
+      localStorage.setItem("token", res.data.token);
+      setUser(res.data.user);
+      return res.data.user;
+    } catch (err) {
+      console.error("AuthContext: login error", err);
+      throw err;
+    }
   };
 
   const logout = () => {

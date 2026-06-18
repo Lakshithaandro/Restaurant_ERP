@@ -297,31 +297,17 @@ textarea.input { resize: vertical; min-height: 96px; }
 
 /* Landing / public pages */
 .portal-home, .customer-page, .staff-login-screen { position: relative; z-index: 1; min-height: 100vh; color: #fff; background: radial-gradient(circle at 18% 16%, rgba(255,122,69,.22), transparent 28%), radial-gradient(circle at 86% 18%, rgba(84,214,160,.17), transparent 26%), linear-gradient(135deg, #15110e, #22160e 45%, #120e0b); }
-.portal-hero { width: min(1180px, calc(100% - 38px)); margin: 0 auto; min-height: 100vh; display: grid; grid-template-columns: 1.05fr .95fr; align-items: center; gap: 44px; padding: 72px 0 50px; }
+.portal-hero { width: min(1180px, calc(100% - 38px)); margin: 0 auto; min-height: 100vh; display: grid; grid-template-columns: 1fr; justify-items: center; text-align: center; align-items: center; gap: 44px; padding: 72px 0 50px; }
 .eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: var(--gold); font-size: 11px; font-weight: 950; text-transform: uppercase; letter-spacing: .12em; margin-bottom: 18px; }
 .eyebrow.dark { color: var(--ember); border-color: rgba(255,122,69,.25); background: rgba(255,122,69,.08); }
 .hero-copy h1, .customer-copy h1, .login-promo h1 { font-size: clamp(42px, 6.4vw, 78px); max-width: 880px; letter-spacing: -0.028em; line-height: 1.04; text-wrap: balance; }
 .hero-copy p, .customer-copy p, .login-promo p { max-width: 660px; margin-top: 18px; color: rgba(255,255,255,.72); font-size: 18px; line-height: 1.7; }
-.hero-actions { display: flex; flex-wrap: wrap; gap: 13px; margin-top: 28px; }
+.hero-copy p { margin-left: auto; margin-right: auto; }
+.hero-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 13px; margin-top: 28px; }
 .landing-metrics, .hero-metrics { display: flex; flex-wrap: wrap; gap: 13px; margin-top: 26px; }
 .landing-metrics span, .hero-metrics span, .login-promo-cards span { display: grid; gap: 2px; min-width: 128px; padding: 13px 15px; border-radius: 17px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); color: rgba(255,255,255,.72); }
 .landing-metrics strong, .hero-metrics strong { display: block; color: #fff; font-size: 24px; font-family: var(--display); letter-spacing: -0.04em; }
-.landing-showcase { padding: 20px; border-radius: 34px; border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.08); backdrop-filter: blur(24px) saturate(1.3); box-shadow: 0 34px 110px rgba(0,0,0,.34); overflow: hidden; position: relative; }
-.landing-showcase::before { content: ""; position: absolute; inset: -1px; background: linear-gradient(135deg, rgba(255,122,69,.24), transparent 42%, rgba(84,214,160,.16)); pointer-events: none; }
-.showcase-top { display: flex; justify-content: space-between; align-items: center; color: rgba(255,255,255,.78); margin-bottom: 24px; position: relative; }
-.showcase-sale { display: grid; gap: 5px; padding: 24px; border-radius: 24px; background: rgba(0,0,0,.2); border: 1px solid rgba(255,255,255,.12); position: relative; }
-.showcase-sale span, .showcase-sale small { color: rgba(255,255,255,.66); font-weight: 750; }
-.showcase-sale strong { font-size: clamp(42px, 6vw, 70px); font-family: var(--display); letter-spacing: -0.07em; }
-.showcase-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 14px; position: relative; }
-.showcase-grid div { padding: 15px; border-radius: 17px; background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.12); }
-.showcase-grid b { display: block; }
-.showcase-grid span { display: block; color: rgba(255,255,255,.65); margin-top: 4px; font-size: 12.5px; }
-.service-rail { display: flex; align-items: end; gap: 12px; height: 92px; margin-top: 18px; position: relative; }
-.service-rail span { flex: 1; border-radius: 13px 13px 4px 4px; background: var(--flame); animation: railPulse 2.7s ease-in-out infinite; }
-.service-rail span:nth-child(1) { height: 44%; }
-.service-rail span:nth-child(2) { height: 78%; animation-delay: .2s; }
-.service-rail span:nth-child(3) { height: 58%; animation-delay: .38s; }
-@keyframes railPulse { 50% { filter: brightness(1.15); transform: scaleY(1.08); } }
+/* Unused landing-showcase and service-rail CSS removed */
 .portal-section, .module-strip { width: min(1180px, calc(100% - 38px)); margin: 0 auto; padding: 34px 0; }
 .portal-stack { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
 .portal-card, .module-card { transition: .26s var(--ease); }
@@ -505,7 +491,7 @@ textarea.input { resize: vertical; min-height: 96px; }
   .cards-4 { grid-template-columns: repeat(2, 1fr); }
   .cards-3 { grid-template-columns: repeat(2, 1fr); }
   .dashboard-hero, .portal-hero, .customer-hero, .login-layout { grid-template-columns: 1fr; }
-  .landing-showcase, .login-card { max-width: 620px; }
+  .login-card { max-width: 620px; }
   .footer-top { grid-template-columns: 1fr; gap: 40px; }
   .footer-lede { max-width: 520px; }
 }
@@ -519,7 +505,7 @@ textarea.input { resize: vertical; min-height: 96px; }
   .clock, .topbar-pill { display: none; }
   .content { padding: 22px 18px 54px; }
   .cards-2, .cards-3 { grid-template-columns: 1fr; }
-  .quick-actions, .portal-stack, .showcase-grid, .module-strip { grid-template-columns: 1fr; }
+  .quick-actions, .portal-stack, .module-strip { grid-template-columns: 1fr; }
   .cart { position: static; }
   .content > .grid[style] { grid-template-columns: 1fr !important; }
   .footer-cols { grid-template-columns: repeat(2, 1fr); gap: 24px 20px; }

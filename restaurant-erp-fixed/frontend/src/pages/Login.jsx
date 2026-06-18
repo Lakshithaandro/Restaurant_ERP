@@ -26,6 +26,7 @@ export default function Login() {
       await login(email, password);
       navigate("/staff-portal");
     } catch (err) {
+      console.error("Login submit error:", err);
       setError(err.response?.data?.message || "Login failed. Try again.");
     } finally {
       setBusy(false);

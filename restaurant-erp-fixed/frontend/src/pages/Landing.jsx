@@ -32,36 +32,6 @@ export default function Landing() {
               </Link>
             </div>
           </div>
-
-          <div className="landing-showcase" aria-label="ERP preview">
-            <div className="showcase-top">
-              <span className="live-tag"><i /> Live service</span>
-              <span className="mono">19:42</span>
-            </div>
-            <div className="showcase-grid">
-              <div>
-                <b>Table 12</b>
-                <span>Seated · 4 pax</span>
-              </div>
-              <div>
-                <b>ORD-8294</b>
-                <span>Ready for billing</span>
-              </div>
-              <div>
-                <b>Paneer Tikka</b>
-                <span>14 sold today</span>
-              </div>
-              <div>
-                <b>Low stock</b>
-                <span>Paneer · 2.4kg</span>
-              </div>
-            </div>
-            <div className="service-rail">
-              <span />
-              <span />
-              <span />
-            </div>
-          </div>
         </section>
 
         <section className="portal-section">

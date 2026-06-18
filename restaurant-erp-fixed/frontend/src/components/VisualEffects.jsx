@@ -10,7 +10,6 @@ const REVEAL_SELECTOR = [
   ".track-card",
   ".customer-copy",
   ".hero-copy",
-  ".landing-showcase",
   ".login-card",
 ].join(",");
 

@@ -27,7 +27,7 @@ const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 
 // Socket.IO for real-time kitchen / order updates
 const io = new Server(server, {
-  cors: { origin: CLIENT_URL, methods: ["GET", "POST"] },
+  cors: { origin: CLIENT_URL, methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"] },
 });
 io.on("connection", (socket) => {
   console.log("Client connected:", socket.id);
@@ -37,7 +37,13 @@ io.on("connection", (socket) => {
 app.set("io", io);
 
 // Middleware
-app.use(cors({ origin: CLIENT_URL }));
+app.use(
+  cors({
+    origin: CLIENT_URL,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 app.use(express.json());
 
 // Routes

@@ -1,18 +1,21 @@
 import dotenv from "dotenv";
-import { connectDB } from "../config/db.js";
+import path from "path";
+import { fileURLToPath } from "url";
+import { connectDB } from "./config/db.js";
 import mongoose from "mongoose";
 
-import User from "../models/User.js";
-import Table from "../models/Table.js";
-import MenuItem from "../models/MenuItem.js";
-import InventoryItem from "../models/InventoryItem.js";
-import Supplier from "../models/Supplier.js";
-import Reservation from "../models/Reservation.js";
-import Order from "../models/Order.js";
-import Invoice from "../models/Invoice.js";
-import Attendance from "../models/Attendance.js";
+import User from "./models/User.js";
+import Table from "./models/Table.js";
+import MenuItem from "./models/MenuItem.js";
+import InventoryItem from "./models/InventoryItem.js";
+import Supplier from "./models/Supplier.js";
+import Reservation from "./models/Reservation.js";
+import Order from "./models/Order.js";
+import Invoice from "./models/Invoice.js";
+import Attendance from "./models/Attendance.js";
 
-dotenv.config();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.resolve(__dirname, ".env") });
 
 const run = async () => {
   await connectDB();
