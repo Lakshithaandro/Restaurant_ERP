@@ -43,8 +43,15 @@ export default function Inventory() {
   const [touched, setTouched] = useState({});
 
   const load = () => {
-    api.get("/inventory").then((r) => setItems(r.data));
-    api.get("/inventory/suppliers/all").then((r) => setSuppliers(r.data));
+    // BUG FIX #5: was silently swallowing errors — added .catch() handlers
+    api
+      .get("/inventory")
+      .then((r) => setItems(r.data))
+      .catch((err) => note("err", err.response?.data?.message || "Could not load inventory."));
+    api
+      .get("/inventory/suppliers/all")
+      .then((r) => setSuppliers(r.data))
+      .catch((err) => note("err", err.response?.data?.message || "Could not load suppliers."));
   };
   useEffect(load, []);
 
