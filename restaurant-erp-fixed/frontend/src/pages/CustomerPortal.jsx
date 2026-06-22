@@ -62,6 +62,9 @@ export default function CustomerPortal() {
   const [tracked, setTracked] = useState(null); // null = not searched yet
   const [trackErr, setTrackErr] = useState("");
   const [trackBusy, setTrackBusy] = useState(false);
+  const [cart, setCart] = useState([]);
+  const [placingOrder, setPlacingOrder] = useState(false);
+  const [orderFlash, setOrderFlash] = useState({ type: "", message: "" });
   const pollRef = useRef(null);
 
   useEffect(() => {
@@ -156,6 +159,57 @@ export default function CustomerPortal() {
 
   const activeOne = (tracked || []).find((r) => ACTIVE.includes(r.status));
   const isSeated = activeOne?.status === "seated";
+
+  useEffect(() => {
+    if (!isSeated) {
+      setCart([]);
+      setOrderFlash({ type: "", message: "" });
+    }
+  }, [isSeated]);
+
+  const addToCart = (item) => {
+    setCart((c) => {
+      const found = c.find((x) => x.menuItem === item._id);
+      if (found) {
+        return c.map((x) =>
+          x.menuItem === item._id ? { ...x, quantity: x.quantity + 1 } : x
+        );
+      }
+      return [...c, { menuItem: item._id, name: item.name, price: item.price, quantity: 1 }];
+    });
+  };
+
+  const changeQty = (id, delta) => {
+    setCart((c) =>
+      c
+        .map((x) => (x.menuItem === id ? { ...x, quantity: x.quantity + delta } : x))
+        .filter((x) => x.quantity > 0)
+    );
+  };
+
+  const total = cart.reduce((s, x) => s + x.price * x.quantity, 0);
+
+  const placeCustomerOrder = async () => {
+    if (!isSeated || !activeOne || cart.length === 0) return;
+    setPlacingOrder(true);
+    setOrderFlash({ type: "", message: "" });
+    try {
+      await api.post("/public/orders", {
+        reservationId: activeOne._id,
+        phone: onlyDigits(trackPhone),
+        items: cart.map((x) => ({ menuItem: x.menuItem, quantity: x.quantity })),
+      });
+      setCart([]);
+      setOrderFlash({ type: "ok", message: "Your order was sent to the kitchen." });
+    } catch (err) {
+      setOrderFlash({
+        type: "err",
+        message: err.response?.data?.message || "Could not place your order.",
+      });
+    } finally {
+      setPlacingOrder(false);
+    }
+  };
 
   return (
     <>
@@ -349,7 +403,7 @@ export default function CustomerPortal() {
         </div>
       </section>
 
-      {/* ---- Menu: full & read-only once seated, otherwise a featured preview ---- */}
+      {/* ---- Menu: full orderable menu once seated, otherwise a featured preview ---- */}
       <section className="featured-menu">
         <div className="section-head">
           <h2>{isSeated ? "Your menu" : "Featured menu"}</h2>
@@ -358,20 +412,100 @@ export default function CustomerPortal() {
         {isSeated && (
           <div className="seated-note">
             You’re seated at {activeOne.table ? `Table ${activeOne.table.number}` : "your table"}.
-            Browse the full menu below — our staff will take and place your order for you.
+            Add items below and send your order to the kitchen.
           </div>
         )}
 
         <div className="menu-grid public-menu">
-          {(isSeated ? menu : featured).map((item) => (
-            <article key={item._id} className="menu-tile readonly">
-              <div className="menu-cat">{item.category}</div>
-              <div className="menu-name">{item.name}</div>
-              <p>{item.description || "Freshly prepared by the kitchen team."}</p>
-              <div className="menu-price">{inr(item.price)}</div>
-            </article>
-          ))}
+          {(isSeated ? menu : featured).map((item) =>
+            isSeated ? (
+              <button
+                key={item._id}
+                type="button"
+                className="menu-tile"
+                onClick={() => addToCart(item)}
+              >
+                <div className="menu-cat">{item.category}</div>
+                <div className="menu-name">{item.name}</div>
+                <p>{item.description || "Freshly prepared by the kitchen team."}</p>
+                <div className="menu-tile-foot">
+                  <span className="menu-price">{inr(item.price)}</span>
+                  <span className="tile-add">+</span>
+                </div>
+              </button>
+            ) : (
+              <article key={item._id} className="menu-tile readonly">
+                <div className="menu-cat">{item.category}</div>
+                <div className="menu-name">{item.name}</div>
+                <p>{item.description || "Freshly prepared by the kitchen team."}</p>
+                <div className="menu-price">{inr(item.price)}</div>
+              </article>
+            )
+          )}
         </div>
+
+        {isSeated && (
+          <div className="card card-pad cart" style={{ marginTop: 20 }}>
+            <h3 className="section-title" style={{ marginBottom: 14 }}>
+              Your order
+            </h3>
+            {orderFlash.message && <div className={`flash ${orderFlash.type}`}>{orderFlash.message}</div>}
+            {cart.length === 0 ? (
+              <div className="empty" style={{ padding: "30px 10px" }}>
+                Tap menu items to add them.
+              </div>
+            ) : (
+              <>
+                {cart.map((x) => (
+                  <div key={x.menuItem} className="cart-item">
+                    <div>
+                      <div style={{ fontWeight: 600 }}>{x.name}</div>
+                      <div style={{ fontSize: 12, color: "var(--muted)" }}>{inr(x.price)}</div>
+                    </div>
+                    <div className="qty-ctrl">
+                      <button
+                        type="button"
+                        className="qty-btn"
+                        onClick={() => changeQty(x.menuItem, -1)}
+                      >
+                        –
+                      </button>
+                      <span>{x.quantity}</span>
+                      <button
+                        type="button"
+                        className="qty-btn"
+                        onClick={() => changeQty(x.menuItem, 1)}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    marginTop: 16,
+                    fontWeight: 800,
+                    fontSize: 18,
+                  }}
+                >
+                  <span>Total</span>
+                  <span>{inr(total)}</span>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  style={{ width: "100%", justifyContent: "center", marginTop: 14 }}
+                  onClick={placeCustomerOrder}
+                  disabled={placingOrder || cart.length === 0}
+                >
+                  {placingOrder ? "Sending…" : "Send order to kitchen"}
+                </button>
+              </>
+            )}
+          </div>
+        )}
       </section>
     </main>
     <Footer />

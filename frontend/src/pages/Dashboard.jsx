@@ -4,6 +4,26 @@ import api from "../api/axios.js";
 
 const inr = (n) => "₹" + Number(n || 0).toLocaleString("en-IN");
 
+const dashboardDefaults = {
+  todaysRevenue: 0,
+  ordersToday: 0,
+  activeReservations: 0,
+  lowStockCount: 0,
+  lowStockItems: [],
+  popularItems: [],
+};
+
+const normalizeDashboardData = (payload = {}) => ({
+  ...dashboardDefaults,
+  ...payload,
+  todaysRevenue: Number(payload.todaysRevenue || 0),
+  ordersToday: Number(payload.ordersToday || 0),
+  activeReservations: Number(payload.activeReservations || 0),
+  lowStockCount: Number(payload.lowStockCount || 0),
+  lowStockItems: Array.isArray(payload.lowStockItems) ? payload.lowStockItems : [],
+  popularItems: Array.isArray(payload.popularItems) ? payload.popularItems : [],
+});
+
 const quickLinks = [
   ["New order", "/staff-portal/orders", "▣"],
   ["Seat guests", "/staff-portal/reservations", "▤"],
@@ -18,8 +38,11 @@ export default function Dashboard() {
   useEffect(() => {
     api
       .get("/dashboard")
-      .then((res) => setData(res.data))
-      .catch(() => setError("Could not load dashboard data. Please refresh."));
+      .then((res) => setData(normalizeDashboardData(res.data)))
+      .catch((err) => {
+        console.error("[dashboard] load failed", err.response?.data || err.message);
+        setError("Could not load dashboard data. Please refresh.");
+      });
   }, []);
 
   if (error) return <div className="flash err">{error}</div>;

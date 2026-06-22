@@ -4,24 +4,31 @@ import Reservation from "../models/Reservation.js";
 import InventoryItem from "../models/InventoryItem.js";
 import User from "../models/User.js";
 
-const startOfToday = () => {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
+const DEBUG_API = process.env.DEBUG_API === "true";
+
+const todayWindow = () => {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+
+  return { start, end };
 };
 
 // GET /api/dashboard - summary cards for the home screen
 export const getDashboard = async (req, res) => {
-  const today = startOfToday();
+  const { start, end } = todayWindow();
+  const todayFilter = { createdAt: { $gte: start, $lt: end } };
 
-  const [todaysInvoices, activeReservations, lowStockItems, ordersToday] =
+  const [todaysInvoices, activeReservations, lowStockItems, orders] =
     await Promise.all([
-      Invoice.find({ createdAt: { $gte: today }, paid: true }),
+      Invoice.find({ ...todayFilter, paid: true }),
       Reservation.countDocuments({
         status: { $in: ["pending", "confirmed", "seated"] },
       }),
       InventoryItem.find(),
-      Order.countDocuments({ createdAt: { $gte: today } }),
+      Order.find(todayFilter),
     ]);
 
   const todaysRevenue = todaysInvoices.reduce((sum, inv) => sum + inv.total, 0);
@@ -30,7 +37,6 @@ export const getDashboard = async (req, res) => {
   );
 
   // popular items today, computed from order line items
-  const orders = await Order.find({ createdAt: { $gte: today } });
   const counts = {};
   orders.forEach((o) =>
     o.items.forEach((it) => {
@@ -42,14 +48,33 @@ export const getDashboard = async (req, res) => {
     .sort((a, b) => b.qty - a.qty)
     .slice(0, 5);
 
-  res.json({
+  const payload = {
     todaysRevenue,
-    ordersToday,
+    ordersToday: orders.length,
     activeReservations,
     lowStockCount: lowStock.length,
     lowStockItems: lowStock.map((i) => ({ name: i.name, quantity: i.quantity })),
     popularItems,
-  });
+  };
+
+  if (DEBUG_API) {
+    console.log("[dashboard] summary", {
+      userId: req.user?._id?.toString(),
+      todayWindow: {
+        start: start.toISOString(),
+        end: end.toISOString(),
+      },
+      paidInvoicesToday: todaysInvoices.length,
+      ordersToday: orders.length,
+      activeReservations,
+      inventoryItems: lowStockItems.length,
+      lowStockCount: lowStock.length,
+      popularItems: popularItems.length,
+      payload,
+    });
+  }
+
+  res.json(payload);
 };
 
 // GET /api/dashboard/reports - data for the reports screen

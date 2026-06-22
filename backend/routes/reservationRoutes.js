@@ -22,7 +22,7 @@ router.put("/tables/:id", authorize("admin", "manager"), updateTable);
 // Reservations
 router.get("/", getReservations);
 router.post("/", createReservation);
-router.put("/:id", updateReservation);
+router.put("/:id", authorize("admin", "manager", "waiter"), updateReservation);
 router.delete("/:id", authorize("admin", "manager"), deleteReservation);
 
 export default router;

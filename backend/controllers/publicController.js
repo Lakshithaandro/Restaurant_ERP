@@ -5,13 +5,42 @@ import Table from "../models/Table.js";
 import { createOrderFromItems } from "./orderController.js";
 import { nameError, phoneError, normalizePhone } from "../utils/validators.js";
 
+const DEBUG_API = process.env.DEBUG_API === "true";
+
 export const getPublicTables = async (req, res) => {
   const tables = await Table.find({ status: "available" }).sort("number");
+
+  if (DEBUG_API) {
+    const totalTables = await Table.countDocuments();
+    const statusCounts = await Table.aggregate([
+      { $group: { _id: "$status", count: { $sum: 1 } } },
+      { $sort: { _id: 1 } },
+    ]);
+
+    console.log("[public] tables", {
+      returnedAvailableTables: tables.length,
+      totalTables,
+      statusCounts,
+    });
+  }
+
   res.json(tables);
 };
 
 export const getPublicMenu = async (req, res) => {
   const menu = await MenuItem.find({ available: true }).sort("category name");
+
+  if (DEBUG_API) {
+    const totalMenuItems = await MenuItem.countDocuments();
+    const availableMenuItems = await MenuItem.countDocuments({ available: true });
+
+    console.log("[public] menu", {
+      returnedAvailableMenuItems: menu.length,
+      totalMenuItems,
+      availableMenuItems,
+    });
+  }
+
   res.json(menu);
 };
 

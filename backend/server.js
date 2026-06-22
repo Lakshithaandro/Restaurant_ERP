@@ -18,32 +18,72 @@ import dashboardRoutes from "./routes/dashboardRoutes.js";
 import publicRoutes from "./routes/publicRoutes.js";
 
 dotenv.config();
+const DEBUG_API = process.env.DEBUG_API === "true";
 await connectDB();
 
 const app = express();
 const server = http.createServer(app);
 
-const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
+const DEFAULT_CLIENT_URLS = [
+  "http://localhost:5173",
+  "https://restaurant-erp-1-v70d.onrender.com",
+];
+
+const normalizeOrigin = (origin) => origin.trim().replace(/\/$/, "");
+
+const parseClientUrls = () => {
+  const configuredUrls = process.env.CLIENT_URLS
+    ? process.env.CLIENT_URLS.split(",")
+    : [...DEFAULT_CLIENT_URLS, process.env.CLIENT_URL];
+
+  return [...new Set(configuredUrls.filter(Boolean).map(normalizeOrigin))];
+};
+
+const allowedOrigins = parseClientUrls();
+
+const corsOrigin = (origin, callback) => {
+  // Allow requests without an Origin header, such as same-origin requests,
+  // Render health checks, curl, Postman, and server-to-server calls.
+  if (!origin) return callback(null, true);
+
+  if (allowedOrigins.includes(normalizeOrigin(origin))) {
+    return callback(null, true);
+  }
+
+  if (DEBUG_API) {
+    console.warn("[cors] blocked origin", {
+      origin,
+      allowedOrigins,
+    });
+  }
+
+  return callback(new Error(`CORS blocked origin: ${origin}`));
+};
+
+const corsOptions = {
+  origin: corsOrigin,
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
 
 // Socket.IO for real-time kitchen / order updates
 const io = new Server(server, {
-  cors: { origin: CLIENT_URL, methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"] },
+  cors: corsOptions,
+  transports: ["polling", "websocket"],
 });
+
 io.on("connection", (socket) => {
   console.log("Client connected:", socket.id);
   socket.on("disconnect", () => console.log("Client disconnected:", socket.id));
 });
+
 // make io available inside controllers via req.app.get("io")
 app.set("io", io);
 
 // Middleware
-app.use(
-  cors({
-    origin: CLIENT_URL,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 app.use(express.json());
 
 // Routes
@@ -62,4 +102,8 @@ app.use(notFound);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Allowed CORS origins: ${allowedOrigins.join(", ")}`);
+  console.log(`DEBUG_API: ${DEBUG_API ? "enabled" : "disabled"}`);
+});

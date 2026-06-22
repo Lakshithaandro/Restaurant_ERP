@@ -65,10 +65,15 @@ export const getKitchenQueue = async (req, res) => {
   res.json(orders);
 };
 
-export const createOrder = async (req, res) => {
-  const { tableId, items } = req.body;
+const badOrderRequest = (message) => {
+  const err = new Error(message);
+  err.statusCode = 400;
+  return err;
+};
+
+export const createOrderFromItems = async ({ tableId, items, placedBy }) => {
   if (!items || items.length === 0) {
-    return res.status(400).json({ message: "Order needs at least one item" });
+    throw badOrderRequest("Order needs at least one item");
   }
 
   // Build order items from the live menu so prices cannot be tampered with.
@@ -78,15 +83,13 @@ export const createOrder = async (req, res) => {
   for (const i of items) {
     const qty = Number(i.quantity || 1);
     if (!Number.isInteger(qty) || qty < 1 || qty > 99) {
-      return res.status(400).json({
-        message: "Each order item quantity must be a whole number from 1 to 99.",
-      });
+      throw badOrderRequest("Each order item quantity must be a whole number from 1 to 99.");
     }
 
     const menuItem = await MenuItem.findById(i.menuItem);
     if (!menuItem) continue;
     if (!menuItem.available) {
-      return res.status(400).json({ message: `${menuItem.name} is currently unavailable.` });
+      throw badOrderRequest(`${menuItem.name} is currently unavailable.`);
     }
 
     orderItems.push({
@@ -99,7 +102,7 @@ export const createOrder = async (req, res) => {
   }
 
   if (orderItems.length === 0) {
-    return res.status(400).json({ message: "No valid menu items in this order." });
+    throw badOrderRequest("No valid menu items in this order.");
   }
 
   let tableNumber;
@@ -112,18 +115,30 @@ export const createOrder = async (req, res) => {
     }
   }
 
-  const order = await Order.create({
+  return Order.create({
     orderNumber: genOrderNumber(),
     table: tableId,
     tableNumber,
     items: orderItems,
     total,
-    placedBy: req.user._id,
+    ...(placedBy ? { placedBy } : {}),
   });
+};
 
-  // notify kitchen screens in real time
-  req.app.get("io").emit("order:new", order);
-  res.status(201).json(order);
+export const createOrder = async (req, res) => {
+  try {
+    const order = await createOrderFromItems({
+      tableId: req.body.tableId,
+      items: req.body.items,
+      placedBy: req.user._id,
+    });
+
+    // notify kitchen screens in real time
+    req.app.get("io").emit("order:new", order);
+    res.status(201).json(order);
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ message: err.message || "Could not place order." });
+  }
 };
 
 const ORDER_STATUSES = ["pending", "preparing", "ready", "served", "cancelled"];

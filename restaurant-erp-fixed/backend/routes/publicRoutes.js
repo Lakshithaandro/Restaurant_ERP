@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  createPublicOrder,
   createPublicReservation,
   getPublicMenu,
   getPublicTables,
@@ -12,5 +13,6 @@ router.get("/tables", getPublicTables);
 router.get("/menu", getPublicMenu);
 router.get("/reservations/lookup", lookupReservations);
 router.post("/reservations", createPublicReservation);
+router.post("/orders", createPublicOrder);
 
 export default router;

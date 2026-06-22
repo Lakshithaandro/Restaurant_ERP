@@ -1,6 +1,8 @@
+import mongoose from "mongoose";
 import MenuItem from "../models/MenuItem.js";
 import Reservation from "../models/Reservation.js";
 import Table from "../models/Table.js";
+import { createOrderFromItems } from "./orderController.js";
 import { nameError, phoneError, normalizePhone } from "../utils/validators.js";
 
 export const getPublicTables = async (req, res) => {
@@ -27,6 +29,47 @@ export const lookupReservations = async (req, res) => {
     .limit(10)
     .select("customerName partySize table date time type status notes createdAt");
   res.json(reservations);
+};
+
+export const createPublicOrder = async (req, res) => {
+  const { reservationId, phone, items } = req.body;
+  const normalizedPhone = normalizePhone(phone);
+
+  if (
+    !reservationId ||
+    !mongoose.Types.ObjectId.isValid(reservationId) ||
+    !/^\d{10}$/.test(normalizedPhone)
+  ) {
+    return res.status(400).json({ message: "Reservation and 10-digit phone number are required." });
+  }
+
+  const reservation = await Reservation.findOne({
+    _id: reservationId,
+    phone: normalizedPhone,
+    status: "seated",
+  }).populate("table", "number seats location status");
+
+  if (!reservation) {
+    return res.status(403).json({
+      message: "Ordering is available only after your reservation is seated.",
+    });
+  }
+
+  if (!reservation.table) {
+    return res.status(400).json({ message: "No table is assigned to this seated reservation." });
+  }
+
+  try {
+    const order = await createOrderFromItems({
+      tableId: reservation.table._id,
+      items,
+    });
+
+    req.app.get("io").emit("order:new", order);
+    res.status(201).json(order);
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ message: err.message || "Could not place order." });
+  }
 };
 
 export const createPublicReservation = async (req, res) => {
